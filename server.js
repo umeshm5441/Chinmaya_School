@@ -36,6 +36,12 @@ app.post("/enquiry", (req, res) => {
     },
   );
 });
+app.get("/get-enquiries", (req, res) => {
+  db.all("SELECT * FROM enquiries", [], (err, rows) => {
+    if (err) return res.status(500).send(err);
+    res.json(rows);
+  });
+});
 
 // Start Server
 app.listen(PORT, () => {
