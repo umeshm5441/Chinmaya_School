@@ -1,5 +1,6 @@
+require("dotenv").config();
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const path = require("path");
 
@@ -10,37 +11,38 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-// Database
-const db = new sqlite3.Database("enquiry.db");
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
-db.run(`CREATE TABLE IF NOT EXISTS enquiries (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  studentName TEXT,
-  parentName TEXT,
-  phone TEXT,
-  className TEXT,
-  message TEXT
-)`);
-
-// API Route
-app.post("/enquiry", (req, res) => {
-  const { studentName, parentName, phone, className, message } = req.body;
-
-  db.run(
-    `INSERT INTO enquiries(studentName,parentName,phone,className,message)
-     VALUES(?,?,?,?,?)`,
-    [studentName, parentName, phone, className, message],
-    function (err) {
-      if (err) return res.status(500).send(err);
-      res.send({ success: true });
-    },
-  );
+// Schema
+const EnquirySchema = new mongoose.Schema({
+  studentName: String,
+  parentName: String,
+  phone: String,
+  className: String,
+  message: String,
 });
-app.get("/get-enquiries", (req, res) => {
-  db.all("SELECT * FROM enquiries", [], (err, rows) => {
-    if (err) return res.status(500).send(err);
-    res.json(rows);
-  });
+
+const Enquiry = mongoose.model("Enquiry", EnquirySchema);
+
+// Save Enquiry
+app.post("/enquiry", async (req, res) => {
+  try {
+    const enquiry = new Enquiry(req.body);
+    await enquiry.save();
+    res.send({ success: true });
+  } catch (err) {
+    res.status(500).send("Error saving enquiry");
+  }
+});
+
+// View Enquiries
+app.get("/get-enquiries", async (req, res) => {
+  const data = await Enquiry.find();
+  res.json(data);
 });
 
 // Start Server
