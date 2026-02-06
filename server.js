@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const fetch = require("node-fetch");
 const bodyParser = require("body-parser");
 const path = require("path");
 
@@ -32,7 +33,22 @@ const Enquiry = mongoose.model("Enquiry", EnquirySchema);
 app.post("/enquiry", async (req, res) => {
   try {
     const enquiry = new Enquiry(req.body);
+
     await enquiry.save();
+    await fetch(
+      "https://script.google.com/macros/s/AKfycbywGjfWlFtKc8erkKWhMZFr_p1Eu70BsmwZhPEqi42PKRcP_Ye3NnF3LYT04ZRZ9gs/exec",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentName: req.body.studentName,
+          parentName: req.body.parentName,
+          phone: req.body.phone,
+          classApplying: req.body.classApplying,
+          message: req.body.message,
+        }),
+      },
+    );
     res.send({ success: true });
   } catch (err) {
     res.status(500).send("Error saving enquiry");
