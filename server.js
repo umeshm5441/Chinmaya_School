@@ -35,21 +35,26 @@ app.post("/enquiry", async (req, res) => {
     const enquiry = new Enquiry(req.body);
 
     await enquiry.save();
-    await fetch(
-      "https://script.google.com/macros/s/AKfycbywGjfWlFtKc8erkKWhMZFr_p1Eu70BsmwZhPEqi42PKRcP_Ye3NnF3LYT04ZRZ9gs/exec",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentName: req.body.studentName,
-          parentName: req.body.parentName,
-          phone: req.body.phone,
-          classApplying: req.body.classApplying,
-          message: req.body.message,
-        }),
-      },
-    );
-    res.send({ success: true });
+    try {
+      await fetch(
+        "https://script.google.com/macros/s/AKfycbywGjfWlFtKc8erkKWhMZFr_p1Eu70BsmwZhPEqi42PKRcP_Ye3NnF3LYT04ZRZ9gs/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentName: req.body.studentName,
+            parentName: req.body.parentName,
+            phone: req.body.phone,
+            classApplying: req.body.className,
+            message: req.body.message,
+          }),
+        },
+      );
+    } catch (err) {
+      console.log("Google Sheet Error:", err.message);
+    }
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).send("Error saving enquiry");
   }
